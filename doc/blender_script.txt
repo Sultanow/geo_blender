@@ -1,0 +1,139 @@
+import bpy
+
+import osgeo
+from osgeo import gdal
+from math import floor
+from mathutils import Vector
+import numpy as np
+
+#https://blender.stackexchange.com/questions/38756/triangulation-using-x-y-z-data-file-to-create-an-elevation-model
+
+def set_shading(shading_type):
+    my_areas = bpy.context.workspace.screens[0].areas
+    for area in my_areas:
+        for space in area.spaces:
+            if space.type == 'VIEW_3D':
+                space.shading.type = shading_type
+                space.shading.wireframe_color_type = 'OBJECT'
+                #space.shading.single_color = (0.5,0,0)
+
+def add_mesh(name, verts, faces, edges=[], col_name="Collection"):
+    mesh = bpy.data.meshes.new(name)
+    obj = bpy.data.objects.new(mesh.name, mesh)
+    col = bpy.data.collections.get(col_name)
+    col.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+    mesh.from_pydata(verts, edges, faces)
+    
+    mat = bpy.data.materials.new("PKHG")
+    mat.diffuse_color = (float(.5),0.0,1.0,0)
+    obj.active_material = mat
+    
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.view3d.camera_to_view_selected()
+    
+    context = bpy.context
+    dg = context.evaluated_depsgraph_get()
+    scene = context.scene
+    # add empty
+    cam_ob = scene.camera
+    plane = context.object
+    
+    pmw = plane.matrix_world
+    bbox = [Vector(b) for b in plane.bound_box]
+    coords = [t for b in plane.bound_box for t in pmw @ Vector(b)]
+    v, scale = cam_ob.camera_fit_coords(dg, coords)
+    cam_ob.data.ortho_scale = scale
+    cam_ob.matrix_world.translation = v
+
+def createvertexarray(raster):
+    transform = raster.GetGeoTransform()
+    width = raster.RasterXSize
+    height = raster.RasterYSize
+    x = np.arange(0, width) * transform[1] + transform[0]
+    y = np.arange(0, height) * transform[5] + transform[3]
+    xx, yy = np.meshgrid(x, y)
+    zz = raster.ReadAsArray()
+    vertices = np.vstack((xx,yy,zz)).reshape([3, -1]).transpose()
+    return vertices
+
+def createindexarray(raster):
+    width = raster.RasterXSize
+    height = raster.RasterYSize
+
+    ai = np.arange(0, width - 1)
+    aj = np.arange(0, height - 1)
+    aii, ajj = np.meshgrid(ai, aj)
+    a = aii + ajj * width
+    a = a.flatten()
+
+    tria = np.vstack((a, a + width, a + width + 1, a, a + width + 1, a + 1))
+    tria = np.transpose(tria).reshape([-1, 3])
+    return tria
+
+#verts = [(0,0,0),(0,5,0),(5,5,0),(5,0,0),(0,0,5),(0,5,5),(5,5,5),(0,5,0),(5,0,5)]
+#faces = [(0,1,2,3),(7,6,5,4),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
+
+gdal_data = osgeo.gdal.Open("C:/Users/esultano/git/corona_datascience/data/f2323.dem")
+raster = gdal_data.ReadAsArray().astype(np.float)
+raster[raster==-32767.] = np.nan
+
+#verts = createvertexarray(gdal_data)
+#faces = createindexarray(gdal_data)
+#verts = list(map(tuple, verts))
+#faces = list(map(tuple, faces))
+
+def generate_face_keys(num_x, num_y):
+    faces = []
+    verts_per_side_x = num_x
+
+    for i in range((num_x - 1) * (num_y - 1)):
+        x = (i % (num_x - 1))
+        y = floor(i / (num_x - 1))
+
+        level = x + (y * verts_per_side_x)
+        idx1 = level
+        idx2 = level + 1
+        idx3 = level + verts_per_side_x + 1
+        idx4 = level + verts_per_side_x
+        faces.append([idx1, idx2, idx3, idx4])
+
+    return faces
+
+transform = gdal_data.GetGeoTransform()
+
+#equally to width = raster.shape[1]
+#equally to height = raster.shape[0]
+width = gdal_data.RasterXSize
+height = gdal_data.RasterYSize
+
+x = np.arange(0, width) * transform[1] + transform[0]
+y = np.arange(0, height) * transform[5] + transform[3]
+xx, yy = np.meshgrid(x, y)
+zz = gdal_data.ReadAsArray()
+vertices = np.vstack((xx,yy,zz)).reshape([3, -1]).transpose()
+num_vertices = len(vertices)
+
+#Note: width=979, height=1400
+index_x_from = 200 #0
+index_x_to = 1200 #height
+index_y_from = 400 #0
+index_y_to = 900 #width
+
+verts = []
+for i in range(index_x_from, index_x_to):
+    for j in range(index_y_from, index_y_to):
+        x=xx[i,j]/1000
+        y=yy[i,j]/1000
+        z=zz[i,j]/1000
+        verts.append((x, y, z))
+
+faces = generate_face_keys((index_x_to-index_x_from), (index_y_to-index_y_from))
+
+#print(verts[:10])
+add_mesh("cube", verts, faces)
+
+# 'WIREFRAME' 'SOLID' 'MATERIAL' 'RENDERED'
+set_shading('WIREFRAME')
+

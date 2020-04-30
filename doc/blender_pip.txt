@@ -1,0 +1,14 @@
+download
+ GDAL‑3.0.4‑cp37‑cp37m‑win_amd64.whl
+from
+ https://www.lfd.uci.edu/~gohlke/pythonlibs/#gdal
+
+copy the file GDAL‑3.0.4‑cp37‑cp37m‑win_amd64.whl into
+ C:\Program Files\Blender Foundation\Blender 2.82\2.82\python\bin
+
+open powershell navigate to this directory and install it
+ cd "C:\Program Files\Blender Foundation\Blender 2.82\2.82\python\bin"
+ .\python.exe -m pip install .\GDAL-3.0.4-cp37-cp37m-win_amd64.whl
+
+GDAL will be installed into
+ C:\Program Files\Blender Foundation\Blender 2.82\2.82\python\lib\site-packages\osgeo
