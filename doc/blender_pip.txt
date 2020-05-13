@@ -12,3 +12,14 @@ open powershell navigate to this directory and install it
 
 GDAL will be installed into
  C:\Program Files\Blender Foundation\Blender 2.82\2.82\python\lib\site-packages\osgeo
+ 
+ 
+ 
+ for SciPy
+ open powershell navigate to this directory and install it
+ 
+ First command
+ cd "C:\Program Files\Blender Foundation\Blender 2.82\2.82\python\bin"
+ Second command 
+ ./python -m pip install scipy
+ 
