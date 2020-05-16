@@ -16,7 +16,7 @@ GDAL will be installed into
  
  
  for SciPy
- open powershell navigate to this directory and install it
+ open powershell as admin navigate to this directory and install it
  cd "C:\Program Files\Blender Foundation\Blender 2.82\2.82\python\bin"
  ./python.exe -m pip install --upgrade pip setuptools wheel
  ./python -m ensurepip
