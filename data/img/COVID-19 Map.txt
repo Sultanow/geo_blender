@@ -1,0 +1,5 @@
+us map
+https://coronavirus.jhu.edu/us-map
+
+world map
+https://coronavirus.jhu.edu/map.html
