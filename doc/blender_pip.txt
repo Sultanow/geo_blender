@@ -1,3 +1,7 @@
+download Blender
+from 
+ Blender.org
+
 download
  GDAL‑3.0.4‑cp37‑cp37m‑win_amd64.whl
 from
@@ -21,7 +25,7 @@ upgrade pip
  ./python.exe -m pip install --upgrade pip setuptools wheel
  ./python -m ensurepip
  
-install SciPy
- ./python -m pip install scipy
+install numpy
+ ./python -m pip install numpy
 install geomdl
  ./python -m pip install geomdl
